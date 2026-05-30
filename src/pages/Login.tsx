@@ -3,7 +3,7 @@ import { useAuth } from '../lib/auth';
 import { isConfigValid } from '../lib/config';
 import { Lock, Mail, AlertTriangle, KeyRound } from 'lucide-react';
 
-const LOGO_URL = 'https://lh5.googleusercontent.com/d/18gfsdR2hQ2l1YhS8gipWOR2zQdmGwZEr';
+const LOGO_URL = 'https://lh5.googleusercontent.com/d/1r7PM1ogHIbxskvcauVIYaQOfSHXWGncO';
 
 export const Login: React.FC = () => {
   const { login } = useAuth();
