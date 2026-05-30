@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 font-sans selection:bg-hospital-200 selection:text-hospital-900;
+  }
+}
+
+/* Custom scrollbar for premium dashboard feel */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
+}
+
+/* Recharts premium styling overrides */
+.recharts-default-tooltip {
+  @apply !bg-white/95 !border-slate-100 !rounded-lg !shadow-xl !backdrop-blur-md !text-xs !p-3 !border;
+}
+
+.recharts-tooltip-item {
+  @apply !p-0 !m-0;
+}
+
+/* Print-friendly layout classes */
+@media print {
+  body {
+    background-color: white !important;
+    color: black !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .print-page-break {
+    page-break-before: always;
+  }
+}
