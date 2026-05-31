@@ -516,7 +516,7 @@ function handleListPatients(e, db) {
   if (diagnosisFilter) {
     const patientIdsWithDiagnosis = new Set(
       diagnoses
-        .filter(d => d.active === true && d.diagnosis_name.toLowerCase().includes(diagnosisFilter))
+        .filter(d => d.active === true && String(d.diagnosis_name || '').toLowerCase().includes(diagnosisFilter))
         .map(d => d.patient_id)
     );
     filtered = filtered.filter(p => patientIdsWithDiagnosis.has(p.id));
@@ -951,102 +951,111 @@ function handleRevokeShareLink(payload, db, currentUser) {
 
 // Dashboard statistics
 function handleDashboardSummary(db) {
-  const patients = getSheetData(db, 'patients');
-  const diagnoses = getSheetData(db, 'diagnoses');
-  const observations = getSheetData(db, 'observations');
-  
-  const totalPatients = patients.length;
-  
-  // Calculate NCD registries from active diagnoses
-  const dmCount = new Set(diagnoses.filter(d => d.active === true && d.diagnosis_name.toLowerCase().includes('dm')).map(d => d.patient_id)).size;
-  const htCount = new Set(diagnoses.filter(d => d.active === true && d.diagnosis_name.toLowerCase().includes('ht')).map(d => d.patient_id)).size;
-  const lipidCount = new Set(diagnoses.filter(d => d.active === true && (d.diagnosis_name.toLowerCase().includes('dyslipidemia') || d.diagnosis_name.toLowerCase().includes('lipid'))).map(d => d.patient_id)).size;
-  const ckdCount = new Set(diagnoses.filter(d => d.active === true && d.diagnosis_name.toLowerCase().includes('ckd')).map(d => d.patient_id)).size;
-  
-  // Group observations by patient to find latest values
-  const latestObsByPatient = {};
-  observations.forEach(obs => {
-    const pid = obs.patient_id;
-    const type = obs.observation_type;
-    const date = new Date(obs.observation_date).getTime();
+  try {
+    const patients = getSheetData(db, 'patients');
+    const diagnoses = getSheetData(db, 'diagnoses');
+    const observations = getSheetData(db, 'observations');
     
-    if (!latestObsByPatient[pid]) latestObsByPatient[pid] = {};
-    if (!latestObsByPatient[pid][type] || latestObsByPatient[pid][type].date < date) {
-      latestObsByPatient[pid][type] = {
-        value: parseFloat(obs.value),
-        date: date
-      };
-    }
-  });
-  
-  // Uncontrolled cases
-  let uncontrolledBP = 0;
-  let uncontrolledDM = 0;
-  let abnormalLDL = 0;
-  
-  Object.keys(latestObsByPatient).forEach(pid => {
-    const patientObs = latestObsByPatient[pid];
+    const totalPatients = patients.length;
     
-    // BP Uncontrolled (SBP >= 140 or DBP >= 90)
-    const sbp = patientObs['SBP'] ? patientObs['SBP'].value : 0;
-    const dbp = patientObs['DBP'] ? patientObs['DBP'].value : 0;
-    if (sbp >= 140 || dbp >= 90) {
-      uncontrolledBP++;
-    }
+    // Calculate NCD registries from active diagnoses
+    const dmCount = new Set(diagnoses.filter(d => d.active === true && String(d.diagnosis_name || '').toLowerCase().includes('dm')).map(d => d.patient_id)).size;
+    const htCount = new Set(diagnoses.filter(d => d.active === true && String(d.diagnosis_name || '').toLowerCase().includes('ht')).map(d => d.patient_id)).size;
+    const lipidCount = new Set(diagnoses.filter(d => d.active === true && (String(d.diagnosis_name || '').toLowerCase().includes('dyslipidemia') || String(d.diagnosis_name || '').toLowerCase().includes('lipid'))).map(d => d.patient_id)).size;
+    const ckdCount = new Set(diagnoses.filter(d => d.active === true && String(d.diagnosis_name || '').toLowerCase().includes('ckd')).map(d => d.patient_id)).size;
     
-    // DM Uncontrolled (HbA1c >= 7.0)
-    const hba1c = patientObs['HbA1c'] ? patientObs['HbA1c'].value : 0;
-    if (hba1c >= 7) {
-      uncontrolledDM++;
-    }
+    // Group observations by patient to find latest values
+    const latestObsByPatient = {};
+    observations.forEach(obs => {
+      const pid = obs.patient_id;
+      const type = obs.observation_type;
+      const date = new Date(obs.observation_date).getTime();
+      
+      if (!latestObsByPatient[pid]) latestObsByPatient[pid] = {};
+      if (!latestObsByPatient[pid][type] || latestObsByPatient[pid][type].date < date) {
+        latestObsByPatient[pid][type] = {
+          value: parseFloat(obs.value),
+          date: date
+        };
+      }
+    });
     
-    // Abnormal LDL (LDL >= 100)
-    const ldl = patientObs['LDL'] ? patientObs['LDL'].value : 0;
-    if (ldl >= 100) {
-      abnormalLDL++;
-    }
-  });
-  
-  // Monthly observations count for chart (last 6 months)
-  const monthlyCounts = {};
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  observations.forEach(obs => {
-    if (!obs.observation_date) return;
-    const d = new Date(obs.observation_date);
-    if (isNaN(d.getTime())) return; // skip invalid dates
-    const key = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0');
-    monthlyCounts[key] = (monthlyCounts[key] || 0) + 1;
-  });
-  
-  const monthlyChartData = Object.keys(monthlyCounts).sort().slice(-6).map(key => {
-    const parts = key.split('-');
-    const monthIndex = parseInt(parts[1], 10) - 1;
-    const monthName = (monthIndex >= 0 && monthIndex < 12) ? monthNames[monthIndex] : "Unknown";
-    const label = monthName + " " + parts[0].slice(-2);
-    return { month: label, count: monthlyCounts[key] };
-  });
+    // Uncontrolled cases
+    let uncontrolledBP = 0;
+    let uncontrolledDM = 0;
+    let abnormalLDL = 0;
+    
+    Object.keys(latestObsByPatient).forEach(pid => {
+      const patientObs = latestObsByPatient[pid];
+      
+      // BP Uncontrolled (SBP >= 140 or DBP >= 90)
+      const sbp = patientObs['SBP'] ? patientObs['SBP'].value : 0;
+      const dbp = patientObs['DBP'] ? patientObs['DBP'].value : 0;
+      if (sbp >= 140 || dbp >= 90) {
+        uncontrolledBP++;
+      }
+      
+      // DM Uncontrolled (HbA1c >= 7.0)
+      const hba1c = patientObs['HbA1c'] ? patientObs['HbA1c'].value : 0;
+      if (hba1c >= 7) {
+        uncontrolledDM++;
+      }
+      
+      // Abnormal LDL (LDL >= 100)
+      const ldl = patientObs['LDL'] ? patientObs['LDL'].value : 0;
+      if (ldl >= 100) {
+        abnormalLDL++;
+      }
+    });
+    
+    // Monthly observations count for chart (last 6 months)
+    const monthlyCounts = {};
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    observations.forEach(obs => {
+      if (!obs.observation_date) return;
+      const d = new Date(obs.observation_date);
+      if (isNaN(d.getTime())) return; // skip invalid dates
+      const key = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0');
+      monthlyCounts[key] = (monthlyCounts[key] || 0) + 1;
+    });
+    
+    const monthlyChartData = Object.keys(monthlyCounts).sort().slice(-6).map(key => {
+      const parts = key.split('-');
+      const monthIndex = parseInt(parts[1], 10) - 1;
+      const monthName = (monthIndex >= 0 && monthIndex < 12) ? monthNames[monthIndex] : "Unknown";
+      const label = monthName + " " + parts[0].slice(-2);
+      return { month: label, count: monthlyCounts[key] };
+    });
 
-  // Recent patients (with robust created_at date filtering)
-  const recentPatients = patients
-    .filter(p => p.created_at && !isNaN(new Date(p.created_at).getTime()))
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 5);
+    // Recent patients (with robust created_at date filtering)
+    const recentPatients = patients
+      .filter(p => p.created_at && !isNaN(new Date(p.created_at).getTime()))
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 5);
 
-  return jsonResponse({
-    success: true,
-    summary: {
-      totalPatients,
-      dmCount,
-      htCount,
-      lipidCount,
-      ckdCount,
-      uncontrolledBP,
-      uncontrolledDM,
-      abnormalLDL
-    },
-    monthlyObservations: monthlyChartData,
-    recentPatients
-  });
+    return jsonResponse({
+      success: true,
+      summary: {
+        totalPatients,
+        dmCount,
+        htCount,
+        lipidCount,
+        ckdCount,
+        uncontrolledBP,
+        uncontrolledDM,
+        abnormalLDL
+      },
+      monthlyObservations: monthlyChartData,
+      recentPatients
+    });
+  } catch (error) {
+    return jsonResponse({
+      error: true,
+      success: false,
+      message: "Dashboard Error: " + error.toString(),
+      status: 500
+    });
+  }
 }
 
 // Print-friendly Patient Summary Report

@@ -76,7 +76,9 @@ export const Dashboard: React.FC = () => {
     return (
       <Layout currentRoute="dashboard">
         <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-xl text-red-800 text-sm font-semibold">
-          Error loading dashboard summary. Verify Web App URL and Sheet connectivity.
+          Error loading dashboard summary: {error instanceof Error ? error.message : 'Unknown error'}
+          <br /><br />
+          <span className="text-xs font-mono bg-red-100 p-1 rounded">Please verify your Web App URL and check the Network tab for details.</span>
         </div>
       </Layout>
     );
