@@ -279,6 +279,10 @@ function getSheetData(db, sheetName) {
   const headers = values[0];
   const rows = [];
   for (let i = 1; i < values.length; i++) {
+    // Skip empty rows (where first column is empty or row is blank)
+    if (values[i][0] === undefined || values[i][0] === null || String(values[i][0]).trim() === "") {
+      continue;
+    }
     const row = {};
     for (let j = 0; j < headers.length; j++) {
       row[headers[j]] = values[i][j];
@@ -1007,19 +1011,24 @@ function handleDashboardSummary(db) {
   const monthlyCounts = {};
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   observations.forEach(obs => {
+    if (!obs.observation_date) return;
     const d = new Date(obs.observation_date);
+    if (isNaN(d.getTime())) return; // skip invalid dates
     const key = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0');
     monthlyCounts[key] = (monthlyCounts[key] || 0) + 1;
   });
   
   const monthlyChartData = Object.keys(monthlyCounts).sort().slice(-6).map(key => {
     const parts = key.split('-');
-    const label = monthNames[parseInt(parts[1], 10) - 1] + " " + parts[0].slice(-2);
+    const monthIndex = parseInt(parts[1], 10) - 1;
+    const monthName = (monthIndex >= 0 && monthIndex < 12) ? monthNames[monthIndex] : "Unknown";
+    const label = monthName + " " + parts[0].slice(-2);
     return { month: label, count: monthlyCounts[key] };
   });
 
-  // Recent patients
+  // Recent patients (with robust created_at date filtering)
   const recentPatients = patients
+    .filter(p => p.created_at && !isNaN(new Date(p.created_at).getTime()))
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 5);
 

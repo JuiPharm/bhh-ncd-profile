@@ -36,11 +36,6 @@ interface LayoutProps {
 
 }
 
-
-const LOGO_URL = 'https://lh5.googleusercontent.com/d/1r7PM1ogHIbxskvcauVIYaQOfSHXWGncO';
-
-=======
-
 export const Layout: React.FC<LayoutProps> = ({ children, currentRoute }) => {
 
   const { user, logout, isAdmin, isViewer } = useAuth();

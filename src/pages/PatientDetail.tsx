@@ -41,7 +41,8 @@ import {
   Loader,
   Copy,
   CheckCircle,
-  FileText
+  FileText,
+  X
 } from 'lucide-react';
 import { 
   Patient, 
@@ -1116,11 +1117,11 @@ export const PatientDetail: React.FC<PatientDetailProps> = ({ patientId }) => {
                         <input
                           type="text"
                           readOnly
-                          value={`${window.location.origin}${window.location.pathname}#/share?token=${generatedShare.token}`}
+                          value={`${window.location.origin}${window.location.pathname.endsWith('/') ? window.location.pathname : window.location.pathname + '/'}#/share?token=${generatedShare.token}`}
                           className="flex-1 bg-slate-50 px-3 py-2 border border-slate-200 rounded-lg text-xs font-mono select-all outline-none"
                         />
                         <button
-                          onClick={() => copyToClipboard(`${window.location.origin}${window.location.pathname}#/share?token=${generatedShare.token}`, false)}
+                          onClick={() => copyToClipboard(`${window.location.origin}${window.location.pathname.endsWith('/') ? window.location.pathname : window.location.pathname + '/'}#/share?token=${generatedShare.token}`, false)}
                           className="bg-slate-800 hover:bg-slate-900 text-white p-2 rounded-lg transition-colors shrink-0"
                           title="Copy Link"
                         >

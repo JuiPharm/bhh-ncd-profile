@@ -22,7 +22,8 @@ import {
   XAxis, 
   YAxis, 
   Tooltip, 
-  Legend 
+  Legend,
+  CartesianGrid
 } from 'recharts';
 import { formatDate } from '../lib/dates';
 
