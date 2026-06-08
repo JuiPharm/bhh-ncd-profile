@@ -241,8 +241,8 @@ function doPost(e) {
 // Helper to validate HN format
 function cleanAndFormatHN(hn) {
   if (!hn) return null;
-  // Strip hyphens and spaces
-  const clean = hn.toString().replace(/[-\s]/g, '');
+  // Strip hyphens, spaces, and apostrophes
+  const clean = hn.toString().replace(/[-\s']/g, '');
   if (!/^07\d{8}$/.test(clean)) {
     return null; // Must start with 07 and contain exactly 10 digits
   }
@@ -592,16 +592,16 @@ function handleCreatePatient(payload, db, currentUser) {
   // Header: id, hn, first_name, last_name, dob, gender, blood_group, phone, line_id, address, emergency_contact, primary_physician, created_at, updated_at
   const rowData = [
     id,
-    hn,
+    "'" + hn,
     payload.first_name,
     payload.last_name,
     payload.dob, // YYYY-MM-DD
     payload.gender,
     payload.blood_group,
-    payload.phone,
-    payload.line_id,
+    payload.phone ? "'" + payload.phone : "",
+    payload.line_id ? "'" + payload.line_id : "",
     payload.address,
-    payload.emergency_contact,
+    payload.emergency_contact ? "'" + payload.emergency_contact : "",
     payload.primary_physician,
     now,
     now
@@ -649,6 +649,11 @@ function handleUpdatePatient(payload, db, currentUser) {
   
   const now = new Date();
   const updateData = { ...payload, hn: hn, updated_at: now };
+  
+  if (updateData.hn) updateData.hn = "'" + updateData.hn;
+  if (updateData.phone) updateData.phone = "'" + updateData.phone;
+  if (updateData.line_id) updateData.line_id = "'" + updateData.line_id;
+  if (updateData.emergency_contact) updateData.emergency_contact = "'" + updateData.emergency_contact;
   
   // Write updated columns to row
   for (let col = 1; col <= headers.length; col++) {

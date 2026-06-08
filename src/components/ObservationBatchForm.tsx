@@ -15,6 +15,7 @@ const observationFormSchema = z.object({
   Glucose: z.string().optional().refine(val => !val || !isNaN(parseFloat(val)), 'Must be a number'),
   Uric_Acid: z.string().optional().refine(val => !val || !isNaN(parseFloat(val)), 'Must be a number'),
   Creatinine: z.string().optional().refine(val => !val || !isNaN(parseFloat(val)), 'Must be a number'),
+  Lab_GFR: z.string().optional().refine(val => !val || !isNaN(parseFloat(val)), 'Must be a number'),
   notes: z.string().optional(),
 });
 
@@ -79,6 +80,7 @@ export const ObservationBatchForm: React.FC<ObservationBatchFormProps> = ({ pati
         { key: 'Glucose', type: 'Glucose', unit: 'mg/dL' },
         { key: 'Uric_Acid', type: 'Uric Acid', unit: 'mg/dL' },
         { key: 'Creatinine', type: 'Creatinine', unit: 'mg/dL' },
+        { key: 'Lab_GFR', type: 'Lab GFR', unit: 'mL/min/1.73m²' },
       ];
 
       fields.forEach(({ key, type, unit }) => {
@@ -113,6 +115,7 @@ export const ObservationBatchForm: React.FC<ObservationBatchFormProps> = ({ pati
         Glucose: '',
         Uric_Acid: '',
         Creatinine: '',
+        Lab_GFR: '',
       });
       setHeightCm('');
     } catch (err: any) {
@@ -263,6 +266,17 @@ export const ObservationBatchForm: React.FC<ObservationBatchFormProps> = ({ pati
               className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-hospital-500 rounded-lg text-sm outline-none"
             />
             {errors.Creatinine && <span className="text-[10px] text-red-500">{errors.Creatinine.message}</span>}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 mb-1.5">Lab GFR (mL/min/1.73m²)</label>
+            <input
+              type="text"
+              {...register('Lab_GFR')}
+              placeholder="e.g. 90"
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-hospital-500 rounded-lg text-sm outline-none"
+            />
+            {errors.Lab_GFR && <span className="text-[10px] text-red-500">{errors.Lab_GFR.message}</span>}
           </div>
         </div>
 
